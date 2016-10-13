@@ -24,6 +24,7 @@ class WechatBasic(WechatBase):
 
     仅包含官方 API 中所包含的内容, 如需高级功能支持请移步 ext.py 中的 WechatExt 类
     """
+
     def __init__(self, token=None, appid=None, appsecret=None, partnerid=None,
                  partnerkey=None, paysignkey=None, access_token=None, access_token_expires_at=None,
                  jsapi_ticket=None, jsapi_ticket_expires_at=None, checkssl=False, conf=None):
@@ -395,25 +396,20 @@ class WechatBasic(WechatBase):
         """
         return self.request.get('https://api.weixin.qq.com/cgi-bin/menu/delete')
 
-    def upload_media(self, media_type, media_file, extension=''):
+    def upload_image(self, media_file, extension=''):
         """
-        上传多媒体文件
+        上传图文消息中的图片
         详情请参考 http://mp.weixin.qq.com/wiki/10/78b15308b053286e2a66b33f0f0f5fb6.html
         :param media_type: 媒体文件类型，分别有图片（image）、语音（voice）、视频（video）和缩略图（thumb）
         :param media_file: 要上传的文件，一个 File object 或 StringIO object
         :param extension: 如果 media_file 传入的为 StringIO object，那么必须传入 extension 显示指明该媒体文件扩展名，如 ``mp3``, ``amr``；如果 media_file 传入的为 File object，那么该参数请留空
         :return: 返回的 JSON 数据包
         """
-        if six.PY2:
-            return self._upload_media_py2(media_type, media_file, extension)
-        else:
-            return self._upload_media_py3(media_type, media_file, extension)
-
-    def _upload_media_py2(self, media_type, media_file, extension=''):
         if not isinstance(media_file, file) and not isinstance(media_file, six.StringIO):
             raise ValueError('Parameter media_file must be file object or StringIO.StringIO object.')
         if isinstance(media_file, six.StringIO) and not is_allowed_extension(extension.lower()):
-            raise ValueError('Please provide \'extension\' parameters when the type of \'media_file\' is \'StringIO.StringIO\'.')
+            raise ValueError(
+                'Please provide \'extension\' parameters when the type of \'media_file\' is \'StringIO.StringIO\'.')
 
         if isinstance(media_file, file):
             extension = media_file.name.split('.')[-1].lower()
@@ -425,33 +421,40 @@ class WechatBasic(WechatBase):
             filename = 'temp.' + extension
 
         return self.request.post(
-            url='https://api.weixin.qq.com/cgi-bin/media/upload',
-            params={
-                'type': media_type,
-            },
+            url='https://api.weixin.qq.com/cgi-bin/media/uploadimg',
             files={
                 'media': (filename, media_file, convert_ext_to_mime(extension))
             }
         )
 
-    def _upload_media_py3(self, media_type, media_file, extension=''):
-        if isinstance(media_file, io.IOBase) and hasattr(media_file, 'name'):
+    def upload_media(self, media_type, media_file, extension='', filename=''):
+        """
+        上传多媒体文件
+        详情请参考 http://mp.weixin.qq.com/wiki/10/78b15308b053286e2a66b33f0f0f5fb6.html
+        :param media_type: 媒体文件类型，分别有图片（image）、语音（voice）、视频（video）和缩略图（thumb）
+        :param media_file: 要上传的文件，一个 File object 或 StringIO object
+        :param extension: 如果 media_file 传入的为 StringIO object，那么必须传入 extension 显示指明该媒体文件扩展名，如 ``mp3``, ``amr``；如果 media_file 传入的为 File object，那么该参数请留空
+        :return: 返回的 JSON 数据包
+        """
+        if not isinstance(media_file, file) and not isinstance(media_file, six.StringIO):
+            raise ValueError('Parameter media_file must be file object or StringIO.StringIO object.')
+        if isinstance(media_file, six.StringIO) and not is_allowed_extension(extension.lower()):
+            raise ValueError(
+                'Please provide \'extension\' parameters when the type of \'media_file\' is \'StringIO.StringIO\'.')
+
+        if isinstance(media_file, file):
             extension = media_file.name.split('.')[-1].lower()
             if not is_allowed_extension(extension):
                 raise ValueError('Invalid file type.')
-            filename = media_file.name
-        elif isinstance(media_file, io.BytesIO):
-            extension = extension.lower()
-            if not is_allowed_extension(extension):
-                raise ValueError('Please provide \'extension\' parameters when the type of \'media_file\' is \'io.BytesIO\'.')
-            filename = 'temp.' + extension
+            filename = media_file.name if filename == '' else filename + '.' + extension
         else:
-            raise ValueError('Parameter media_file must be io.BufferedIOBase(open a file with \'rb\') or io.BytesIO object.')
+            extension = extension.lower()
+            filename = 'temp.' + extension if filename == '' else filename + '.' + extension
 
         return self.request.post(
-            url='https://api.weixin.qq.com/cgi-bin/media/upload',
+            url='https://api.weixin.qq.com/cgi-bin/material/add_material',
             params={
-                'type': media_type,
+                'type': media_type
             },
             files={
                 'media': (filename, media_file, convert_ext_to_mime(extension))
