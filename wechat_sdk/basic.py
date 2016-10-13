@@ -398,7 +398,7 @@ class WechatBasic(WechatBase):
 
     def upload_image(self, media_file, extension=''):
         """
-        上传图文消息中的图片
+        上传图文消息素材中的图片
         详情请参考 http://mp.weixin.qq.com/wiki/10/78b15308b053286e2a66b33f0f0f5fb6.html
         :param media_type: 媒体文件类型，分别有图片（image）、语音（voice）、视频（video）和缩略图（thumb）
         :param media_file: 要上传的文件，一个 File object 或 StringIO object
